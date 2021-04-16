@@ -11,11 +11,6 @@
     <div>
         <div id="main-content">
             <h2 style="text-align: center;">synth1K1</h2>
-            <div class="audio-div"><p class="audio-title">synth1K1-0</p>
-                <audio controls>
-                    <source src="audio/synth1K1-0.ogg">
-                </audio>
-            </div>
         </div>
     </div>
 
@@ -26,7 +21,7 @@
     <script>
         $(document).ready(function() {
            let content = $('#main-content');
-           for (let i = 0; i < 16; i++) {
+           for (let i = 0; i < 1024; i++) {
                let sound = "synth1K1-" + i;
                let audioWrapper = $('<div class="audio-div"><p class="audio-title">' + sound + '</p></div>');
                let player = $('<audio controls="controls" src="audio/' + sound + '.mp3"></audio>');
