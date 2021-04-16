@@ -29,12 +29,7 @@
            for (let i = 0; i < 16; i++) {
                let sound = "synth1K1-" + i;
                let audioWrapper = $('<div class="audio-div"><p class="audio-title">' + sound + '</p></div>');
-               let player = document.createElement("AUDIO");
-               let source = document.createElement('source');
-               source.src = "audio/" + sound + ".ogg";
-               player.appendChild(source);
-               player.setAttribute("controls", "");
-               player.load();
+               let player = $('<audio controls="controls" src="audio/' + sound + '.mp3"></audio>');
                audioWrapper.append(player);
                content.append(audioWrapper);
            }
@@ -52,7 +47,6 @@
         .audio-title {
             padding-left: 10px;
             margin-bottom: 0px;
-            font-weight: bold;
         }
     </style>
 

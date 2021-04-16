@@ -8,20 +8,17 @@ import os
 import sys
 import argparse
 
+import numpy as np
 import torch
 from tqdm import tqdm
-import soundfile as sf
+from pydub import AudioSegment
 
-from torchsynth.config import SynthConfig
 from torchsynth.synth import Voice
 
 
-def generate_synth1K1(output):
+def generate_synth1k1(output):
 
     voice = Voice()
-
-    if torch.cuda.is_available():
-        voice.to('cuda')
 
     output_dir = os.path.abspath(output)
     if not os.path.isdir(output_dir):
@@ -34,8 +31,17 @@ def generate_synth1K1(output):
             # Write all the audio to disk
             for k in range(len(audio)):
                 index = voice.batch_size * i + k
-                filename = os.path.join(output_dir, f"synth1K1-{index}.ogg")
-                sf.write(filename, audio[k], int(voice.sample_rate.item()))
+                filename = os.path.join(output_dir, f"synth1K1-{index}")
+                audio_data = audio[k].numpy().astype(np.float32)
+                audio_data *= 2147483647
+                audio_data = audio_data.astype(np.int32)
+                sound = AudioSegment(
+                    audio_data.tobytes(),
+                    frame_rate=int(voice.sample_rate.item()),
+                    sample_width=4,
+                    channels=1
+                )
+                sound.export(f"{filename}.mp3", format="mp3")
 
 
 def main(arguments):
@@ -46,7 +52,7 @@ def main(arguments):
     parser.add_argument('outdir', help="Output directory for audio files", type=str)
     args = parser.parse_args(arguments)
 
-    generate_synth1K1(args.outdir)
+    generate_synth1k1(args.outdir)
 
 
 if __name__ == '__main__':
