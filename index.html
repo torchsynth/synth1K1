@@ -40,11 +40,13 @@
                content.append(audioWrapper);
             }
             soundsLoaded += numToLoad;
+            $('#load-more').show();
         }
 
         $(document).ready(function() {
             loadNext();
             $('#load-more').click(() => {
+                $('#load-more').hide();
                 loadNext();
             });
         });
@@ -70,7 +72,7 @@
             margin-bottom: 0px;
         }
         #load-next {
-            margin-bottom: 25px;
+            margin-bottom: 100px;
         }
     </style>
 
