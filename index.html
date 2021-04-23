@@ -36,6 +36,14 @@
                let sound = "synth1K1-" + (i + soundsLoaded);
                let audioWrapper = $('<div class="audio-div"><p class="audio-title">' + sound + '</p></div>');
                let player = $('<audio controls="controls"><source src="audio/' + sound + '.mp3" type="audio/mp3"></audio>');
+
+               // Pause all other audio players when this one is playing
+               player.on("play", function() {
+                   $("audio").not(this).each(function(index, audio) {
+                        audio.pause();
+                    });
+               });
+
                audioWrapper.append(player);
                content.append(audioWrapper);
             }
