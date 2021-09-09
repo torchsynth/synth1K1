@@ -5,6 +5,7 @@ Script for generating synth1K1
 """
 
 import os
+from pathlib import Path
 import sys
 import argparse
 from subprocess import DEVNULL, check_call
@@ -14,12 +15,11 @@ from tqdm import tqdm
 import soundfile as sf
 
 from torchsynth.synth import Voice
-import torchsynth.util as util
 
 
-def generate_synth1k1(output, concat):
+def generate_synth1k1(output: Path, concat: bool, nebula: str, batches: int):
 
-    voice = Voice()
+    voice = Voice(nebula=nebula)
 
     if torch.cuda.is_available():
         voice.to("cuda")
@@ -29,10 +29,19 @@ def generate_synth1k1(output, concat):
     if not os.path.isdir(output_dir):
         raise ValueError("outdir must be a directory")
 
+    # If batches is 8 then this is synth1K1
+    if batches == 8 and nebula == "default":
+        basename = "synth1K1"
+    else:
+        basename = f"torchsynth-voice-{voice.batch_size * batches}"
+
+    if nebula != "default":
+        basename = f"{basename}-{nebula}"
+
     audio_list = []
     with torch.no_grad():
-        for i in tqdm(range(8)):
-            audio = voice(i)
+        for i in tqdm(range(batches)):
+            audio, params, is_train = voice(i)
 
             # Write all the audio to disk
             for k in range(len(audio)):
@@ -41,7 +50,7 @@ def generate_synth1k1(output, concat):
                 # Save individual audio files if not concatenating
                 if not concat:
                     index = voice.batch_size * i + k
-                    filename = os.path.join(output_dir, f"synth1K1-{index}")
+                    filename = os.path.join(output_dir, f"{basename}-{index}")
 
                     # Write WAV file
                     wav_file = f"{filename}.wav"
@@ -60,12 +69,11 @@ def generate_synth1k1(output, concat):
                     os.remove(wav_file)
 
     if concat:
+        # Concatenate all audio examples together
         pad = int(voice.sample_rate.cpu().item() * 0.1)
-        audio_list = [
-            torch.nn.functional.pad(s, (0, pad)) for s in audio_list
-        ]
+        audio_list = [torch.nn.functional.pad(s, (0, pad)) for s in audio_list]
         audio = torch.cat(audio_list)
-        filename = os.path.join(output_dir, "synth1K1.wav")
+        filename = os.path.join(output_dir, f"{basename}.wav")
         sf.write(filename, audio.cpu().numpy(), voice.sample_rate.cpu().int())
 
 
@@ -81,9 +89,25 @@ def main(arguments):
         action="store_true",
         help="Store as single file concatenated together",
     )
+    parser.add_argument(
+        "--nebula",
+        default="default",
+        help="Select nebula for synth1K1. ['default', 'drum']",
+    )
+    parser.add_argument(
+        "--batches",
+        default=8,
+        type=int,
+        help="Number of batches to render. Defaults to 8, which is synth1K1",
+    )
     args = parser.parse_args(arguments)
 
-    generate_synth1k1(args.output, args.concat)
+    # Create output dir if it doesn't exist
+    output = Path(args.output)
+    output.mkdir(exist_ok=True)
+
+    # Generate and save the sounds
+    generate_synth1k1(output, args.concat, args.nebula, args.batches)
 
 
 if __name__ == "__main__":
